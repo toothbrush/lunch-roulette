@@ -27,8 +27,6 @@ rows = ws.rows.drop(1)
 participants = []
 
 rows.each do |row|
-  # break if row[1].empty?
-
   participants << { name: row[1] , email: row[2] }
 end
 
@@ -41,14 +39,11 @@ groups = participants.each_slice(GROUP_SIZE).to_a
 
 n = 1
 groups.each do |grp|
-
   puts "\nGroup #{n} is:".white
-
   grp.each do |elt|
     puts " - #{first_name elt[:name]}, #{elt[:email]}"
   end
   n+=1
-
 end
 
 puts "\nAll email addresses (for convenient copying):\n".blue
