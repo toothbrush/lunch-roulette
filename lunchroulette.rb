@@ -102,12 +102,8 @@ groups.each do |grp|
   n+=1
 end
 
-puts "\nAll email addresses (for convenient copying):\n".blue
-puts participants.map { |x| x[:email] }.join(", ")
 puts ""
-
 exit unless HighLine.agree('Do you want to send the group assignment emails? (type "y")')
-
 
 groups.each do |group|
 
@@ -131,7 +127,7 @@ Hint -> reply-to-all should do the trick fine!
 Cheers,
 p.
 
-PS: Tell everyone to join up here!  #{SIGNUP} :)
+PS: Tell everyone to join up here! #{SIGNUP} :)
 
 --
 Automated Lunch Roulette mailing
