@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require 'date'
 require 'google_drive'
 require 'colorize'
 require 'pp'
@@ -14,9 +15,17 @@ SHEETKEY = "1LoyFeyK53P6pJ8Xcr3Q9_P82jvKW6bgYk3-RMkmn_6o".freeze
 # evenly by 5.
 GROUP_SIZE = 5.freeze
 
+# in case something goes wrong i want to be able to reproduce the same
+# ordering again.  default to using today's date.
+RANDOM_SEED = Time.now.strftime("%d%m%Y").to_i.freeze
+
+GOOGLECONFIG = File.dirname(__FILE__) + "/googleconfig.json"
+CONFIG = File.dirname(__FILE__) + "/config.json"
+
 # Creates a session. This will prompt the credential via command line
 # for the first time and save it to config.json file for later use.
-session = GoogleDrive::Session.from_config("config.json")
+session = GoogleDrive::Session.from_config(GOOGLECONFIG)
+configs = JSON.parse File.read(CONFIG)
 
 # Worksheet of form responses:
 ws = session.spreadsheet_by_key(SHEETKEY).worksheets[1]
@@ -33,7 +42,9 @@ end
 puts "Found #{participants.length} participants.".light_blue
 
 # Randomise all the people!!
-participants = participants.shuffle
+r = Random.new(RANDOM_SEED)
+puts "Using random seed #{RANDOM_SEED}."
+participants = participants.shuffle(random: r)
 
 groups = participants.each_slice(GROUP_SIZE).to_a
 
