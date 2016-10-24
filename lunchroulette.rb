@@ -8,10 +8,10 @@ require 'json'
 require 'highline/import'
 
 def program_name
-  "#{File.basename(__FILE__)} #{githash}"
+  "#{File.basename(__FILE__)} #{git_hash}"
 end
 
-def githash
+def git_hash
   `git describe --tags --long`.strip
 end
 
@@ -70,7 +70,7 @@ configs = JSON.parse File.read(CONFIG)
 
 # The lunch roulette sheet:
 SHEETKEY = configs["sheet_key"]
-SIGNUP = "https://goo.gl/forms/7KJqm9sKJBwtnKGx1".freeze
+SIGNUP = configs["signup_link"]
 
 # Worksheet of form responses:
 ws = session.spreadsheet_by_key(SHEETKEY).worksheets[1]
@@ -127,7 +127,8 @@ Hint -> reply-to-all should do the trick fine!
 Cheers,
 p.
 
-PS: Tell everyone to join up here! #{SIGNUP} :)
+PS: Tell everyone who hasn't yet played Lunch Roulette to join up
+here! #{SIGNUP} :)
 
 --
 Automated Lunch Roulette mailing
