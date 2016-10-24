@@ -48,6 +48,7 @@ end
 
 # The lunch roulette sheet:
 SHEETKEY = "1LoyFeyK53P6pJ8Xcr3Q9_P82jvKW6bgYk3-RMkmn_6o".freeze
+SIGNUP = "https://goo.gl/forms/7KJqm9sKJBwtnKGx1".freeze
 
 # for now there's no smart logic to finding a group size.  40 divides
 # evenly by 5.
@@ -123,6 +124,8 @@ Hint -> reply-to-all should do the trick fine!
 
 Cheers,
 p.
+
+PS: Tell everyone to join up here!  #{SIGNUP} :)
 
 --
 Automated Lunch Roulette mailing
