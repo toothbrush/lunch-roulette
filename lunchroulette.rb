@@ -7,6 +7,10 @@ require 'mail'
 require 'json'
 require 'highline/import'
 
+def program_name
+  "#{File.basename(__FILE__)} #{githash}"
+end
+
 def githash
   `git describe --tags --long`.strip
 end
@@ -31,15 +35,17 @@ def send_mail(mail_to, mail_body, configs)
   from_address = Mail::Address.new configs['user_name']
   from_address.display_name = "Lunch Roulette monkey"
 
+  list = "lunch-roulette"
+
   mail = Mail.new do
     from     from_address.format # returns "John Doe <john@example.com>"
     to       mail_to
     bcc      configs["user_name"] # send debug/admin output to Paul
-    subject  '[lunch-roulette] Group assignments!'
+    subject  "[#{list}] Group assignments!"
     body     mail_body
   end
-  mail.header['User-agent'] = "lunchroulette.rb #{githash}"
-  mail.header['List-ID']    = 'lunch-roulette'
+  mail.header['User-agent'] = program_name
+  mail.header['List-ID']    = list
 
   mail.deliver!
   puts "Sent mail to:".yellow
