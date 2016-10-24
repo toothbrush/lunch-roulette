@@ -3,9 +3,47 @@ require 'date'
 require 'google_drive'
 require 'colorize'
 require 'pp'
+require 'mail'
+require 'json'
+require 'highline/import'
+
+def githash
+  `git describe --tags --long`.strip
+end
 
 def first_name(input)
   input.strip.split[0]
+end
+
+def send_mail(mail_to, mail_body, configs)
+  options = { :address    => 'smtp.gmail.com',
+    :port                 => 587,
+    :domain               => 'redbubble.com',
+    :user_name            => configs["user_name"],
+    :password             => configs["password"],
+    :authentication       => 'plain',
+    :enable_starttls_auto => true }
+
+  Mail.defaults do
+    delivery_method :smtp, options
+  end
+
+  from_address = Mail::Address.new configs['user_name']
+  from_address.display_name = "Lunch Roulette monkey"
+
+  mail = Mail.new do
+    from     from_address.format # returns "John Doe <john@example.com>"
+    to       mail_to
+    bcc      configs["user_name"] # send debug/admin output to Paul
+    subject  '[lunch-roulette] Group assignments!'
+    body     mail_body
+  end
+  mail.header['User-agent'] = "lunchroulette.rb #{githash}"
+  mail.header['List-ID']    = 'lunch-roulette'
+
+  mail.deliver!
+  puts "Sent mail to:".yellow
+  puts "   " + mail_to.green
 end
 
 # The lunch roulette sheet:
@@ -59,3 +97,50 @@ end
 
 puts "\nAll email addresses (for convenient copying):\n".blue
 puts participants.map { |x| x[:email] }.join(", ")
+puts ""
+
+exit unless HighLine.agree('Do you want to send the group assignment emails? (type "y")')
+
+
+groups.each do |group|
+
+  body = "Hello gamblers, :)
+
+This is your Lunch Roulette team assignment mailing!  Forgive me if
+there are errors or ugliness, as i am but a dumb script hacked
+together by Paul one night.
+
+Here is your group assignment!
+
+Your buddies:
+
+#{group.map { |x| "- " + first_name(x[:name]) }.join("\n")}
+
+You'll probably want to contact them and set up a lunch date sometime
+soon!  Have fun :)
+
+Hint -> reply-to-all should do the trick fine!
+
+Cheers,
+p.
+
+--
+Automated Lunch Roulette mailing
+FYI the random seed was #{RANDOM_SEED}.
+Questions?  Tired of participating?  Talk to #{configs["user_name"]}
+"
+
+  rcpt = group.map { |x| x[:email] }.join(", ")
+
+  send_mail(rcpt, body, configs)
+end
+
+# Finally, send me an email with all the data:
+send_mail(configs["user_name"], "Here are all the group assignments!
+
+#{groups.pretty_inspect}
+
+...and all their emails:
+
+#{participants.map { |x| x[:email] }.sort.join(", ")}
+", configs)
