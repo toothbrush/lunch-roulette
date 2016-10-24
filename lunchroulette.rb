@@ -52,10 +52,6 @@ def send_mail(mail_to, mail_body, configs)
   puts "   " + mail_to.green
 end
 
-# The lunch roulette sheet:
-SHEETKEY = "1LoyFeyK53P6pJ8Xcr3Q9_P82jvKW6bgYk3-RMkmn_6o".freeze
-SIGNUP = "https://goo.gl/forms/7KJqm9sKJBwtnKGx1".freeze
-
 # for now there's no smart logic to finding a group size.  40 divides
 # evenly by 5.
 GROUP_SIZE = 5.freeze
@@ -71,6 +67,10 @@ CONFIG = File.dirname(__FILE__) + "/config.json"
 # for the first time and save it to config.json file for later use.
 session = GoogleDrive::Session.from_config(GOOGLECONFIG)
 configs = JSON.parse File.read(CONFIG)
+
+# The lunch roulette sheet:
+SHEETKEY = configs["sheet_key"]
+SIGNUP = "https://goo.gl/forms/7KJqm9sKJBwtnKGx1".freeze
 
 # Worksheet of form responses:
 ws = session.spreadsheet_by_key(SHEETKEY).worksheets[1]
