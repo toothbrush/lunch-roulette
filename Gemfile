@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+  gem 'colorize'
+  gem 'highline'
+  gem 'google_drive', '~> 2.1'
+  gem 'mail', '~> 2.6'
