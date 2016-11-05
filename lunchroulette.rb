@@ -152,4 +152,5 @@ send_mail(configs["user_name"], "Here are all the group assignments!
 ...and all their emails:
 
 #{participants.map { |x| x[:email] }.sort.join(", ")}
-", configs)
+
+EOF", configs)
