@@ -52,8 +52,8 @@ def send_mail(mail_to, mail_body, configs)
   puts "   " + mail_to.green
 end
 
-# for now there's no smart logic to finding a group size.  40 divides
-# evenly by 5.
+# we want at least GROUP_SIZE people in a group.  One more is okay,
+# too.
 GROUP_SIZE = 5.freeze
 
 # in case something goes wrong i want to be able to reproduce the same
@@ -86,12 +86,23 @@ end
 
 puts "Found #{participants.length} participants.".light_blue
 
-# Randomise all the people!!
+NGROUPS = participants.length/GROUP_SIZE # automatically rounds down
+
+puts "Creating #{NGROUPS} groups, with 5 or 6 participants each.".light_blue
+
+# Randomise All the People!!
 r = Random.new(RANDOM_SEED)
-puts "Using random seed #{RANDOM_SEED}."
+puts "Using random seed #{RANDOM_SEED}.".yellow
 participants = participants.shuffle(random: r)
 
-groups = participants.each_slice(GROUP_SIZE).to_a
+groups = Array.new(NGROUPS) {|i| [] }
+
+currentgroup = 0
+participants.each do |participant|
+  puts "Adding participant #{participant[:name]} to group #{currentgroup}."
+  groups[currentgroup] << participant
+  currentgroup = (currentgroup + 1) % NGROUPS
+end
 
 n = 1
 groups.each do |grp|
