@@ -102,6 +102,15 @@ groups.each do |grp|
   n+=1
 end
 
+n = 1
+groups.each do |grp|
+  puts "Group #{n} has size #{grp.length}".blue
+  if grp.length < GROUP_SIZE
+    puts "WARNING: Hmmm!  Group #{grp} is #{grp.length} big...".red
+  end
+  n+=1
+end
+
 puts ""
 exit unless HighLine.agree('Do you want to send the group assignment emails? (type "y")')
 
