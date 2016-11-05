@@ -107,33 +107,36 @@ exit unless HighLine.agree('Do you want to send the group assignment emails? (ty
 
 groups.each do |group|
 
-  body = "Hello gamblers, :)
+  body = "Hello gamblers :),
 
 This is your Lunch Roulette team assignment mailing!  Forgive me if
 there are errors or ugliness, as i am but a dumb script hacked
 together by Paul one night.
-
-Here is your group assignment!
 
 Your buddies:
 
 #{group.map { |x| "- " + first_name(x[:name]) }.join("\n")}
 
 You'll probably want to contact them and set up a lunch date sometime
-soon!  Have fun :)
+soon!  The aim is to spin the Roulette wheel roughly fortnightly, so
+you'll want to plan your lunch sometime within the next two weeks,
+probably.  Experience shows that using a tool like
+https://www.doodle.com to schedule the event is easier for everyone.
+Have fun :)
 
-Hint -> reply-to-all should do the trick fine!
+Hint -> hitting reply-to-all should do the trick fine, and put you in
+contact with only your lunchmates!
 
 Cheers,
-p.
+The Lunch Roulette Monkey (on behalf of Paul)
 
-PS: Tell everyone who hasn't yet played Lunch Roulette to join up
-here! #{SIGNUP} :)
+PS: Tell everyone who hasn't yet played Lunch Roulette to join up for
+next time here! #{SIGNUP} :)
 
 --
 Automated Lunch Roulette mailing
 FYI the random seed was #{RANDOM_SEED}.
-Questions?  Tired of participating?  Talk to #{configs["user_name"]}
+Questions?  Tired of participating?  Talk to #{configs["user_name"]}.
 "
 
   rcpt = group.map { |x| x[:email] }.join(", ")
