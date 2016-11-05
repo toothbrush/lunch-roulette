@@ -33,7 +33,7 @@ def send_mail(mail_to, mail_body, configs)
   end
 
   from_address = Mail::Address.new configs['user_name']
-  from_address.display_name = "Lunch Roulette monkey"
+  from_address.display_name = "Roulette Monkey"
 
   list = "lunch-roulette"
 
