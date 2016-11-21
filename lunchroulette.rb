@@ -40,6 +40,7 @@ def send_mail(mail_to, mail_body, configs)
   mail = Mail.new do
     from     from_address.format # returns "John Doe <john@example.com>"
     to       mail_to
+    reply_to mail_to
     bcc      configs["user_name"] # send debug/admin output to Paul
     subject  "[#{list}] Group assignments!"
     body     mail_body
@@ -156,7 +157,7 @@ next time here! #{SIGNUP} :)
 --
 Automated Lunch Roulette mailing
 FYI the random seed was #{RANDOM_SEED}.
-Questions?  Tired of participating?  Talk to #{configs["user_name"]}.
+Questions?  Tired of participating?  Talk to mailto:#{configs["user_name"]}.
 "
 
   rcpt = group.map { |x| x[:email] }.join(", ")
