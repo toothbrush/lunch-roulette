@@ -73,6 +73,12 @@ CONFIG = File.dirname(__FILE__) + "/config.json"
 args = Hash[ ARGV.flat_map{|s| s.scan(/--?([^=\s]+)(?:=(\S+))?/) } ]
 
 is_sf = args.key? 'sf'
+is_mel = args.key? 'melbourne'
+
+unless is_sf || is_mel
+  puts "Please specify a city with --sf or --melbourne!"
+  exit
+end
 
 # Creates a session. This will prompt the credential via command line
 # for the first time and save it to config.json file for later use.
