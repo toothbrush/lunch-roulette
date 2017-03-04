@@ -7,6 +7,10 @@ require 'mail'
 require 'json'
 require 'highline/import'
 
+def max(a,b)
+  a>b ? a : b
+end
+
 def program_name
   "#{File.basename(__FILE__)} #{git_hash}"
 end
@@ -48,6 +52,8 @@ def send_mail(mail_to, mail_body, configs)
   mail.header['User-agent'] = program_name
   mail.header['List-ID']    = list
 
+  # puts mail.pretty_inspect
+
   mail.deliver!
   puts "Sent mail to:".yellow
   puts "   " + mail_to.green
@@ -55,7 +61,7 @@ end
 
 # we want at least GROUP_SIZE people in a group.  One more is okay,
 # too.
-GROUP_SIZE = 5.freeze
+GROUP_SIZE = 4.freeze
 
 # in case something goes wrong i want to be able to reproduce the same
 # ordering again.  default to using today's date.
@@ -64,17 +70,21 @@ RANDOM_SEED = Time.now.strftime("%Y%m%d").to_i.freeze
 GOOGLECONFIG = File.dirname(__FILE__) + "/googleconfig.json"
 CONFIG = File.dirname(__FILE__) + "/config.json"
 
+args = Hash[ ARGV.flat_map{|s| s.scan(/--?([^=\s]+)(?:=(\S+))?/) } ]
+
+is_sf = args.key? 'sf'
+
 # Creates a session. This will prompt the credential via command line
 # for the first time and save it to config.json file for later use.
 session = GoogleDrive::Session.from_config(GOOGLECONFIG)
 configs = JSON.parse File.read(CONFIG)
 
 # The lunch roulette sheet:
-SHEETKEY = configs["sheet_key"]
-SIGNUP = configs["signup_link"]
+SHEETKEY = is_sf ? configs["sf_sheet_key"] : configs["sheet_key"]
+SIGNUP = is_sf ? configs["sf_signup_link"] : configs["signup_link"]
 
 # Worksheet of form responses:
-ws = session.spreadsheet_by_key(SHEETKEY).worksheets[1]
+ws = session.spreadsheet_by_key(SHEETKEY).worksheets.first
 
 # Responses start on row 2, 1st is header
 rows = ws.rows.drop(1)
@@ -82,7 +92,12 @@ rows = ws.rows.drop(1)
 participants = []
 
 rows.each do |row|
-  participants << { name: row[1] , email: row[2] }
+  # Sob, Google Forms suddenly switch row order..
+  if is_sf
+    participants << { name: row[2] , email: row[1] }
+  else
+    participants << { name: row[1] , email: row[2] }
+  end
 end
 
 puts "Found #{participants.length} participants.".light_blue
@@ -100,7 +115,7 @@ groups = Array.new(NGROUPS) {|i| [] }
 
 currentgroup = 0
 participants.each do |participant|
-  puts "Adding participant #{participant[:name]} to group #{currentgroup}."
+  # puts "Adding participant #{participant[:name]} to group #{currentgroup}."
   groups[currentgroup] << participant
   currentgroup = (currentgroup + 1) % NGROUPS
 end
@@ -136,7 +151,7 @@ together by Paul one night.
 
 Your buddies:
 
-#{group.map { |x| "- " + first_name(x[:name]) }.join("\n")}
+#{group.map { |x| "- #{x[:name]}" }.join("\n")}
 
 You'll probably want to contact them and set up a lunch date sometime
 soon!  The aim is to spin the Roulette wheel roughly fortnightly, so
@@ -145,8 +160,8 @@ probably.  Experience shows that using a tool like
 https://www.doodle.com to schedule the event is easier for everyone.
 Have fun :)
 
-Hint -> hitting reply-to-all should do the trick fine, and put you in
-contact with only your lunchmates!
+Hint -> hitting reply-to-all on this email should do the trick fine,
+and put you in contact with only your lunchmates!
 
 Cheers,
 The Lunch Roulette Monkey (on behalf of Paul)
