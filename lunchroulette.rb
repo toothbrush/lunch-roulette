@@ -102,9 +102,9 @@ end
 
 puts "Found #{participants.length} participants.".light_blue
 
-NGROUPS = participants.length/GROUP_SIZE # automatically rounds down
+NGROUPS = max(1, participants.length/GROUP_SIZE) # automatically rounds down
 
-puts "Creating #{NGROUPS} groups, with 5 or 6 participants each.".light_blue
+puts "Creating #{NGROUPS} groups, with #{GROUP_SIZE} or #{GROUP_SIZE + 1} participants each.".light_blue
 
 # Randomise All the People!!
 r = Random.new(RANDOM_SEED)
