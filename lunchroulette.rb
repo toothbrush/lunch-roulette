@@ -100,11 +100,11 @@ rows.each do |row|
   end
 end
 
-puts "Found #{participants.length} participants.".light_blue
+puts "Found #{participants.length} participants.".magenta
 
 NGROUPS = max(1, participants.length/GROUP_SIZE) # automatically rounds down
 
-puts "Creating #{NGROUPS} groups, with #{GROUP_SIZE} or #{GROUP_SIZE + 1} participants each.".light_blue
+puts "Creating #{NGROUPS} groups, with #{GROUP_SIZE} or #{GROUP_SIZE + 1} participants each.".magenta
 
 # Randomise All the People!!
 r = Random.new(RANDOM_SEED)
