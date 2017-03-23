@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 require 'date'
 require 'google_drive'
 require 'colorize'
@@ -7,8 +8,12 @@ require 'mail'
 require 'json'
 require 'highline/import'
 
-def max(a,b)
-  a>b ? a : b
+def configs
+  @configs ||= JSON.parse File.read(CONFIG)
+end
+
+def max(a, b)
+  a > b ? a : b
 end
 
 def program_name
@@ -23,45 +28,53 @@ def first_name(input)
   input.strip.split[0]
 end
 
-def send_mail(mail_to, mail_body, configs)
-  options = { :address    => 'smtp.gmail.com',
-    :port                 => 587,
-    :domain               => 'redbubble.com',
-    :user_name            => configs['user_name'],
-    :password             => configs['password'],
-    :authentication       => 'plain',
-    :enable_starttls_auto => true }
+def mail_options_default
+  { address:              'smtp.gmail.com',
+    port:                 587,
+    domain:               'redbubble.com',
+    user_name:            configs['user_name'],
+    password:             configs['password'],
+    authentication:       'plain',
+    enable_starttls_auto: true }
+end
 
-  Mail.defaults do
-    delivery_method :smtp, options
-  end
+def from_address
+  address = Mail::Address.new configs['user_name']
+  address.display_name = 'Roulette Monkey'
+  address.format
+end
 
-  from_address = Mail::Address.new configs['user_name']
-  from_address.display_name = 'Roulette Monkey'
+def mailing_list_name
+  'lunch-roulette'
+end
 
-  list = 'lunch-roulette'
-
+def new_mail(mail_to, mail_body)
   mail = Mail.new do
-    from     from_address.format # returns "John Doe <john@example.com>"
+    from     from_address # returns "John Doe <john@example.com>"
     to       mail_to
     reply_to mail_to
     bcc      configs['user_name'] # send debug/admin output to Paul
-    subject  "[#{list}] Group assignments!"
+    subject  '[' + mailing_list_name + '] Group assignments!'
     body     mail_body
   end
+  mail
+end
+
+def send_mail(mail_to, mail_body)
+  Mail.defaults do
+    delivery_method :smtp, mail_options_default
+  end
+
+  mail = new_mail(mail_to, mail_body)
   mail.header['User-agent'] = program_name
-  mail.header['List-ID']    = list
-
-  # puts mail.pretty_inspect
-
-  mail.deliver!
-  puts 'Sent mail to:'.yellow
-  puts '   ' + mail_to.green
+  mail.header['List-ID']    = mailing_list_name
+  # mail.deliver!
+  puts 'Sent mail to:\n'.yellow + '   ' + mail_to.green
 end
 
 # we want at least GROUP_SIZE people in a group.  One more is okay,
 # too.
-GROUP_SIZE = 4.freeze
+GROUP_SIZE = 4
 
 # in case something goes wrong i want to be able to reproduce the same
 # ordering again.  default to using today's date.
@@ -70,7 +83,7 @@ RANDOM_SEED = Time.now.strftime('%Y%m%d').to_i.freeze
 GOOGLECONFIG = File.dirname(__FILE__) + '/googleconfig.json'
 CONFIG = File.dirname(__FILE__) + '/config.json'
 
-args = Hash[ ARGV.flat_map{|s| s.scan(/--?([^=\s]+)(?:=(\S+))?/) } ]
+args = Hash[ARGV.flat_map { |s| s.scan(/--?([^=\s]+)(?:=(\S+))?/) }]
 
 is_sf = args.key? 'sf'
 is_mel = args.key? 'melbourne'
@@ -83,7 +96,6 @@ end
 # Creates a session. This will prompt the credential via command line
 # for the first time and save it to config.json file for later use.
 session = GoogleDrive::Session.from_config(GOOGLECONFIG)
-configs = JSON.parse File.read(CONFIG)
 
 # The lunch roulette sheet:
 SHEETKEY = is_sf ? configs['sf_sheet_key'] : configs['sheet_key']
@@ -98,26 +110,27 @@ rows = ws.rows.drop(1)
 participants = []
 
 rows.each do |row|
-  # Sob, Google Forms suddenly switch row order..
-  if is_sf
-    participants << { name: row[2] , email: row[1] }
-  else
-    participants << { name: row[1] , email: row[2] }
-  end
+  # Sob, Google Forms suddenly switched the column order..
+  participants << if is_sf
+                    { name: row[2], email: row[1] }
+                  else
+                    { name: row[1], email: row[2] }
+                  end
 end
 
 puts "Found #{participants.length} participants.".magenta
 
-NGROUPS = max(1, participants.length/GROUP_SIZE) # automatically rounds down
+NGROUPS = max(1, participants.length / GROUP_SIZE) # automatically rounds down
 
-puts "Creating #{NGROUPS} groups, with #{GROUP_SIZE} or #{GROUP_SIZE + 1} participants each.".magenta
+puts "Creating #{NGROUPS} groups, with #{GROUP_SIZE}"\
+  " or #{GROUP_SIZE + 1} participants each.".magenta
 
 # Randomise All the People!!
 r = Random.new(RANDOM_SEED)
 puts "Using random seed #{RANDOM_SEED}.".yellow
 participants = participants.shuffle(random: r)
 
-groups = Array.new(NGROUPS) {|i| [] }
+groups = Array.new(NGROUPS) { [] }
 
 currentgroup = 0
 participants.each do |participant|
@@ -132,7 +145,7 @@ groups.each do |grp|
   grp.each do |elt|
     puts " - #{first_name elt[:name]}, #{elt[:email]}"
   end
-  n+=1
+  n += 1
 end
 
 n = 1
@@ -141,14 +154,14 @@ groups.each do |grp|
   if grp.length < GROUP_SIZE
     puts "WARNING: Hmmm!  Group #{grp} is #{grp.length} big...".red
   end
-  n+=1
+  n += 1
 end
 
 puts ''
-exit unless HighLine.agree('Do you want to send the group assignment emails? (type "y")')
+exit unless HighLine.agree('Do you want to send the group assignment'\
+  'emails? (type "y")')
 
 groups.each do |group|
-
   body = "Hello gamblers :),
 
 This is your Lunch Roulette team assignment mailing!  Forgive me if
@@ -183,7 +196,7 @@ Questions?  Tired of participating?  Talk to mailto:#{configs['user_name']}.
 
   rcpt = group.map { |x| x[:email] }.join(', ')
 
-  send_mail(rcpt, body, configs)
+  send_mail(rcpt, body)
 end
 
 # Finally, send me an email with all the data:
@@ -195,4 +208,4 @@ send_mail(configs['user_name'], "Here are all the group assignments!
 
 #{participants.map { |x| x[:email] }.sort.join(', ')}
 
-EOF", configs)
+EOF")
