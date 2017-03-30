@@ -69,7 +69,7 @@ def send_mail(mail_to, mail_body)
   mail.header['User-agent'] = program_name
   mail.header['List-ID']    = mailing_list_name
   # mail.deliver!
-  puts 'Sent mail to:\n'.yellow + '   ' + mail_to.green
+  puts "Sent mail to:\n".yellow + '   ' + mail_to.green
 end
 
 # we want at least GROUP_SIZE people in a group.  One more is okay,
@@ -170,7 +170,7 @@ together by Paul one night.
 
 Your buddies:
 
-#{group.map { |x| "- #{x[:name]}" }.join('\n')}
+#{group.map { |x| "- #{x[:name]}" }.join("\n")}
 
 You'll probably want to contact them and set up a lunch date sometime
 soon!  The aim is to spin the Roulette wheel roughly fortnightly, so
