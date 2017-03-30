@@ -68,7 +68,7 @@ def send_mail(mail_to, mail_body)
   mail = new_mail(mail_to, mail_body)
   mail.header['User-agent'] = program_name
   mail.header['List-ID']    = mailing_list_name
-  # mail.deliver!
+  mail.deliver!
   puts "Sent mail to:\n".yellow + '   ' + mail_to.green
 end
 
