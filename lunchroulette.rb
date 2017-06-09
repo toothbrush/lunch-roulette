@@ -4,9 +4,9 @@ require 'date'
 require 'google_drive'
 require 'colorize'
 require 'pp'
-require 'mail'
 require 'json'
 require 'highline/import'
+require 'slack-ruby-client'
 
 def configs
   @configs ||= JSON.parse File.read(CONFIG)
@@ -20,56 +20,12 @@ def program_name
   "#{File.basename(__FILE__)} #{git_hash}"
 end
 
+def to_slack_handle(email)
+  /(^[^@]+)@/.match(email)[1]
+end
+
 def git_hash
   `git describe --tags --long`.strip
-end
-
-def first_name(input)
-  input.strip.split[0]
-end
-
-def mail_options_default
-  { address:              'smtp.gmail.com',
-    port:                 587,
-    domain:               'redbubble.com',
-    user_name:            configs['user_name'],
-    password:             configs['password'],
-    authentication:       'plain',
-    enable_starttls_auto: true }
-end
-
-def from_address
-  address = Mail::Address.new configs['user_name']
-  address.display_name = 'Roulette Monkey'
-  address.format
-end
-
-def mailing_list_name
-  'lunch-roulette'
-end
-
-def new_mail(mail_to, mail_body)
-  mail = Mail.new do
-    from     from_address # returns "John Doe <john@example.com>"
-    to       mail_to
-    reply_to mail_to
-    bcc      configs['user_name'] # send debug/admin output to Paul
-    subject  '[' + mailing_list_name + '] Group assignments!'
-    body     mail_body
-  end
-  mail
-end
-
-def send_mail(mail_to, mail_body)
-  Mail.defaults do
-    delivery_method :smtp, mail_options_default
-  end
-
-  mail = new_mail(mail_to, mail_body)
-  mail.header['User-agent'] = program_name
-  mail.header['List-ID']    = mailing_list_name
-  mail.deliver!
-  puts "Sent mail to:\n".yellow + '   ' + mail_to.green
 end
 
 # we want at least GROUP_SIZE people in a group.  One more is okay,
@@ -110,12 +66,7 @@ rows = ws.rows.drop(1)
 participants = []
 
 rows.each do |row|
-  # Sob, Google Forms suddenly switched the column order..
-  participants << if is_sf
-                    { name: row[2], email: row[1] }
-                  else
-                    { name: row[1], email: row[2] }
-                  end
+  participants << { name: row[2], email: row[1] }
 end
 
 puts "Found #{participants.length} participants.".magenta
@@ -134,7 +85,6 @@ groups = Array.new(NGROUPS) { [] }
 
 currentgroup = 0
 participants.each do |participant|
-  # puts "Adding participant #{participant[:name]} to group #{currentgroup}."
   groups[currentgroup] << participant
   currentgroup = (currentgroup + 1) % NGROUPS
 end
@@ -143,7 +93,7 @@ n = 1
 groups.each do |grp|
   puts "\nGroup #{n} is:".white
   grp.each do |elt|
-    puts " - #{first_name elt[:name]}, #{elt[:email]}"
+    puts " - #{elt[:name]}, #{elt[:email]}"
   end
   n += 1
 end
@@ -158,54 +108,31 @@ groups.each do |grp|
 end
 
 puts ''
-exit unless HighLine.agree('Do you want to send the group assignment'\
-  'emails? (type "y")')
 
-groups.each do |group|
-  body = "Hello gamblers :),
-
-This is your Lunch Roulette team assignment mailing!  Forgive me if
-there are errors or ugliness, as i am but a dumb script hacked
-together by Paul one night.
-
-Your buddies:
-
-#{group.map { |x| "- #{x[:name]}" }.join("\n")}
-
-You'll probably want to contact them and set up a lunch date sometime
-soon!  The aim is to spin the Roulette wheel roughly fortnightly, so
-you'll want to plan your lunch sometime within the next two weeks,
-probably.  Experience shows that using a tool like
-https://www.doodle.com to schedule the event is easier for everyone.
-Have fun :)
-
-Hint -> hitting reply-to-all on this email should do the trick fine,
-and put you in contact with only your lunchmates!
-
-Cheers,
-The Lunch Roulette Monkey (on behalf of Paul)
-
-PS: Tell everyone who hasn't yet played Lunch Roulette to join up for
-next time here! #{SIGNUP} :)
-
---
-Automated Lunch Roulette mailing
-FYI the random seed was #{RANDOM_SEED}.
-Questions?  Tired of participating?  Talk to mailto:#{configs['user_name']}.
-"
-
-  rcpt = group.map { |x| x[:email] }.join(', ')
-
-  send_mail(rcpt, body)
+Slack.configure do |config|
+  config.token = configs['SLACK_API_TOKEN']
 end
 
-# Finally, send me an email with all the data:
-send_mail(configs['user_name'], "Here are all the group assignments!
+client = Slack::Web::Client.new
 
-#{groups.pretty_inspect}
+users_list = client.users_list['members']
 
-...and all their emails:
+mapping = {}
+users_list.each do |u|
+  mapping[u['name']] = u['id']
+end
 
-#{participants.map { |x| x[:email] }.sort.join(', ')}
+exit unless HighLine.agree('Do you want to send the group assignment '\
+  'messages? (type "y")')
 
-EOF")
+groups.each do |group|
+
+  rcpt = group.map { |x| to_slack_handle(x[:email]) }.join(',')
+
+  puts rcpt
+
+  # group_chat = client.mpim_open(users: rcpt)["group"]
+  # client.chat_postMessage(channel: group_chat["id"], text: 'you\'re in a group now!', as_user: true)
+end
+
+
