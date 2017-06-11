@@ -56,6 +56,7 @@ session = GoogleDrive::Session.from_config(GOOGLECONFIG)
 # The lunch roulette sheet:
 SHEETKEY = is_sf ? configs['sf_sheet_key'] : configs['sheet_key']
 SIGNUP = is_sf ? configs['sf_signup_link'] : configs['signup_link']
+OFFICE_CHANNEL = is_sf ? "#sf-office" : "#melbourne"
 
 # Worksheet of form responses:
 ws = session.spreadsheet_by_key(SHEETKEY).worksheets.first
@@ -125,8 +126,7 @@ users_list.each do |u|
   mapping[u['name']] = u['id']
 end
 
-exit unless HighLine.agree('Do you want to send the group assignment '\
-  'messages? (type "y")')
+exit unless HighLine.agree('Do these look right? (type "y")')
 
 groups.each do |group|
 
@@ -134,15 +134,15 @@ groups.each do |group|
   rcpt = group.map { |x| mapping[to_slack_handle(x[:email])] }.join(',')
 
   puts "We'll send to this group: ".red
-  puts names
+  puts names.cyan
 
-  if HighLine.agree('Do you want to send via Slack now? (type "y")')
+  if HighLine.agree('Do you want to send MPIMs via Slack now? (type "y")')
     group_chat = client.mpim_open(users: rcpt)["group"]
     client.chat_postMessage(channel: group_chat["id"],
-                            text: "Congratulations, you #{group.length} are together in this week's Lunch Roulette!  Feel free to continue the discussion here, I'm just a bot and I'll keep quiet now.  Experience shows that this works best if someone quickly takes initiative and kicks off the planning!",
+                            text: "Congratulations, you #{group.length} are together for this week's Lunch Roulette! Feel free to continue the discussion here, I'm just a shy bot and I'll keep quiet now. Experience shows that this works best if someone quickly takes initiative and kicks off the planning!",
                             as_user: true)
     client.chat_postMessage(channel: group_chat["id"],
-                            text: "_Psst: I hope you like the Slack integration.  It's very hip and modern, but @paul.david is just grumbling in the corner about the kids these days not liking email._",
+                            text: "_Psst: I hope you like the new Slack integration. It's very hip and modern and 2.0 -- @paul.david is in the corner grumbling about the kids these days not using email..._",
                             as_user: true)
 
     client.chat_postMessage(channel: "@paul.david",
@@ -151,9 +151,10 @@ groups.each do |group|
   end
 end
 
-# consider sending a message to "#melbourne" saying that people can sign up at #{link} for next week!
-client.chat_postMessage(channel: "#lunch-roulette",
-                        text: "Just a reminder that this week's lunch roulette has just been kicked off, and it's already rumoured to be a roaring success.  Don't miss out and sign up here for next week's incarnation: #{SIGNUP}",
-                        as_user: true)
+if HighLine.agree("Do you want to send reminder to #{OFFICE_CHANNEL} now? (type \"y\")")
+  client.chat_postMessage(channel: OFFICE_CHANNEL,
+    text: "This week's lunch roulette has just been kicked off, and it's already rumoured to be a roaring success. Don't miss out, sign up for next time: #{SIGNUP} :sun_with_face: Stay happy and healthy!",
+    as_user: true)
+end
 
 
