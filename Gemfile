@@ -1,5 +1,8 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
-  gem 'colorize'
-  gem 'highline'
-  gem 'google_drive', '~> 2.1'
-  gem 'mail', '~> 2.6'
+
+gem 'colorize'
+gem 'google_drive', '~> 2.1'
+gem 'highline'
+gem 'slack-ruby-client'
