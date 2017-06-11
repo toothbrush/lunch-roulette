@@ -17,16 +17,8 @@ def max(a, b)
   a > b ? a : b
 end
 
-def program_name
-  "#{File.basename(__FILE__)} #{git_hash}"
-end
-
 def to_slack_handle(email)
   /(^[^@]+)@/.match(email)[1]
-end
-
-def git_hash
-  `git describe --tags --long`.strip
 end
 
 # we want at least GROUP_SIZE people in a group.  One more is okay,
