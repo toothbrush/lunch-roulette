@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+
 require 'date'
 require 'google_drive'
 require 'colorize'
@@ -56,7 +57,7 @@ session = GoogleDrive::Session.from_config(GOOGLECONFIG)
 # The lunch roulette sheet:
 SHEETKEY = is_sf ? configs['sf_sheet_key'] : configs['sheet_key']
 SIGNUP = is_sf ? configs['sf_signup_link'] : configs['signup_link']
-OFFICE_CHANNEL = is_sf ? "#sf-office" : "#melbourne"
+OFFICE_CHANNEL = is_sf ? '#sf-office' : '#melbourne'
 
 # Worksheet of form responses:
 ws = session.spreadsheet_by_key(SHEETKEY).worksheets.first
@@ -118,7 +119,7 @@ client = Slack::Web::Client.new
 
 users_list = client.users_list['members']
 
-mapping = Hash.new do |hash, key|
+mapping = Hash.new do |_hash, key|
   raise("Slack user #{key} doesn't exist!")
 end
 
@@ -129,32 +130,46 @@ end
 exit unless HighLine.agree('Do these look right? (type "y")')
 
 groups.each do |group|
-
   names = group.map { |x| "@#{to_slack_handle(x[:email])}" }.join(', ')
   rcpt = group.map { |x| mapping[to_slack_handle(x[:email])] }.join(',')
 
   puts "We'll send to this group: ".red
   puts names.cyan
 
-  if HighLine.agree('Do you want to send MPIMs via Slack now? (type "y")')
-    group_chat = client.mpim_open(users: rcpt)["group"]
-    client.chat_postMessage(channel: group_chat["id"],
-                            text: "Congratulations, you #{group.length} are together for this week's Lunch Roulette! Feel free to continue the discussion here, I'm just a shy bot and I'll keep quiet now. Experience shows that this works best if someone quickly takes initiative and kicks off the planning!",
-                            as_user: true)
-    client.chat_postMessage(channel: group_chat["id"],
-                            text: "_Psst: I hope you like the new Slack integration. It's very hip and modern and 2.0 -- @paul.david is in the corner grumbling about the kids these days not using email..._",
-                            as_user: true)
+  next unless HighLine.agree('Send MPIMs via Slack now? (type "y")')
+  group_chat = client.mpim_open(users: rcpt)['group']
+  client.chat_postMessage(channel: group_chat['id'],
+                          text: "Congratulations, you #{group.length} are " \
+                            "together for this week's Lunch Roulette! Feel " \
+                            "free to continue the discussion here, I'm " \
+                            "just a shy bot and I'll keep quiet now. " \
+                            "Experience shows that this works best " \
+                            "if someone quickly takes initiative and " \
+                            "kicks off the planning!",
+                          as_user: true)
+  client.chat_postMessage(channel: group_chat['id'],
+                          text: '_Psst: I hope you like the new ' \
+                            'Slack integration. It\'s very hip ' \
+                            'and modern and 2.0 -- @paul.david ' \
+                            'is in the corner grumbling about ' \
+                            'the kids these days not using email..._',
+                          as_user: true)
 
-    client.chat_postMessage(channel: "@paul.david",
-      text: "DEBUG INFO: group = #{names}",
-      as_user: true)
-  end
+  client.chat_postMessage(channel: '@paul.david',
+                          text: "DEBUG INFO: group = #{names}",
+                          as_user: true)
 end
 
-if HighLine.agree("Do you want to send reminder to #{OFFICE_CHANNEL} now? (type \"y\")")
+client.chat_postMessage(channel: '@paul.david',
+                        text: "DEBUG INFO: seed = #{RANDOM_SEED}",
+                        as_user: true)
+
+if HighLine.agree("Send reminder to #{OFFICE_CHANNEL} now? (type \"y\")")
   client.chat_postMessage(channel: OFFICE_CHANNEL,
-    text: "This week's lunch roulette has just been kicked off, and it's already rumoured to be a roaring success. Don't miss out, sign up for next time: #{SIGNUP} :sun_with_face: Stay happy and healthy!",
-    as_user: true)
+                          text: "This week's lunch roulette has just been " \
+                            "kicked off, and it's already rumoured to be " \
+                            "a roaring success. Don't miss out, sign up " \
+                            "for next time: #{SIGNUP} :sun_with_face: " \
+                            "Stay happy and healthy!",
+                          as_user: true)
 end
-
-
