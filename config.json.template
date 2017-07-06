@@ -6,8 +6,5 @@
     "sf_signup_link": "(SF version) https://goo.gl/forms/xxxxxxxxxxxx",
     # MEL-related Google sheets
     "sheet_key": "1Loxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "signup_link": "(MEL version) https://goo.gl/forms/xxxxxxxxxxxx",
-    # These credentials are used for sending the emails.
-    "user_name": "smtp-login@redbubble.com",
-    "password": "smtp-password-here"
+    "signup_link": "(MEL version) https://goo.gl/forms/xxxxxxxxxxxx"
 }
