@@ -1,4 +1,7 @@
 {
+    # Your Slack credentials:
+    "slack_webhook": "https://hooks.slack.com/services/your/slack/webtoken",
+    "SLACK_API_TOKEN": "xoxb-asdfasdfasdfxxxxxxxx",
     # Find the sheet keys by visiting Google Sheets and copying the id
     # from the URL.
     # SF-related Google sheets:
