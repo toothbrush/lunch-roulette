@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 # frozen_string_literal: true
 
 require 'date'
@@ -157,18 +158,16 @@ groups.each do |group|
   client.chat_postMessage(
     channel: group_chat['id'],
     link_names: 1,
-    text: "Congratulations, you #{group.length} are together for this Lunch Roulette! " \
-      "We're trialling a new approach where everyone in #{OFFICE_CHANNEL} is automatically entered into the lottery. " \
-      "If you don't feel like it, don't feel obliged to join in! " \
-      "The group is big enough that you don't need everyone to join for it to be an enriching experience.",
+    text: "Congratulations, you've been selected for this Lunch Roulette! " \
+      "We're trialling a new approach where everyone in #{OFFICE_CHANNEL} is automatically entered into the lottery – " \
+      "if you don't want to join in, feel free to ignore. Have a nice day! :smile:",
     as_user: true)
   client.chat_postMessage(
     channel: group_chat['id'],
     link_names: 1,
-    text: "_Psst: If for whatever reason you really don't want to participate in Lunch Roulette, opt-out here: #{SIGNUP}. " \
-      "The reason for including all of #{OFFICE_CHANNEL} is to see if we can increase the diversity of the groups (i.e., all departments!) and in doing so foster " \
-      "better relationships between all of us.  Also, Lunch Roulette has been a rather obscure unknown thing, and often people don't even realise it exists - that's another" \
-      "thing we're hoping to address. Please feel free to send comments/flames/thoughts to @paul.david._",
+    text: "_Psst: Don't understand what Lunch Roulette is? Want to opt-out? " \
+      "All information is here: https://github.com/toothbrush/lunch-roulette/wiki. " \
+      "Please feel free to send comments/flames/thoughts to @paul.david._",
     as_user: true)
 
   client.chat_postMessage(channel: '@paul.david',
