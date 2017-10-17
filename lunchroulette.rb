@@ -28,7 +28,7 @@ GROUP_SIZE = 6
 
 # in case something goes wrong i want to be able to reproduce the same
 # ordering again.  default to using today's date.
-RANDOM_SEED = Time.now.strftime('%Y%m%d').to_i.freeze
+RANDOM_SEED = ENV['RANDOM_SEED'].to_i.freeze || Time.now.strftime('%Y%m%d').to_i.freeze
 
 GOOGLECONFIG = File.dirname(__FILE__) + '/googleconfig.json'
 CONFIG = File.dirname(__FILE__) + '/config.json'
