@@ -66,20 +66,27 @@ raw_participants = office_channel_info['channel']['members']
 puts "Getting all users..."
 users_list = client.users_list['members']
 
-mapping = Hash.new do |_hash, key|
-  raise("Slack user #{key} doesn't exist!")
-end
+mapping = Hash.new
 
 users_list.each do |u|
-  mapping[u['id']] = u['name']
+  next if u['deleted']     # skip over deleted users
+  next if u['is_bot']      # skip over bots
+  next if u['is_app_user']
+  mapping[u['id']] = {
+                      name: u['name'],
+                      timezone: u['tz'],
+                      deleted: u['deleted']
+                     }
 end
 
 participants = []
 puts "Translating UIDs to Slack usernames..."
 # Assuming here we get no dups / invalid UIDs, etc.
 raw_participants.each do |p|
-  username = mapping[p]
-  participants << { username: username, id: p }
+  next unless mapping[p]
+  username = mapping[p][:name]
+  participants << { username: username, id: p } if mapping[p][:timezone] == "Australia/Canberra"
+  puts "#{username.light_red} is in \"#{mapping[p][:timezone]}\", excluding." unless mapping[p][:timezone] == "Australia/Canberra"
 end
 
 exclusions = []
@@ -92,7 +99,7 @@ ws = session.spreadsheet_by_key(SHEETKEY).worksheets.first
 rows = ws.rows.drop(1)
 
 rows.each do |row|
-  exclusions << row[2] # this is Slack username without @
+  exclusions << row[2] # this is Slack username without the @
 end
 
 puts "Number of                     exclusions: #{exclusions.length}"
