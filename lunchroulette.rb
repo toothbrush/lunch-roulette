@@ -28,7 +28,7 @@ GROUP_SIZE = 6
 
 # in case something goes wrong i want to be able to reproduce the same
 # ordering again.  default to using today's date.
-RANDOM_SEED = ENV['RANDOM_SEED'].to_i.freeze || Time.now.strftime('%Y%m%d').to_i.freeze
+RANDOM_SEED = (ENV['RANDOM_SEED'] || Time.now.strftime('%Y%m%d')).to_i.freeze
 
 GOOGLECONFIG = File.dirname(__FILE__) + '/googleconfig.json'
 CONFIG = File.dirname(__FILE__) + '/config.json'
@@ -66,17 +66,15 @@ raw_participants = office_channel_info['channel']['members']
 puts "Getting all users..."
 users_list = client.users_list['members']
 
-mapping = Hash.new
+mapping = {}
 
 users_list.each do |u|
   next if u['deleted']     # skip over deleted users
   next if u['is_bot']      # skip over bots
   next if u['is_app_user']
-  mapping[u['id']] = {
-                      name: u['name'],
-                      timezone: u['tz'],
-                      deleted: u['deleted']
-                     }
+  mapping[u['id']] = { name: u['name'],
+                       timezone: u['tz'],
+                       deleted: u['deleted'] }
 end
 
 participants = []
@@ -85,8 +83,11 @@ puts "Translating UIDs to Slack usernames..."
 raw_participants.each do |p|
   next unless mapping[p]
   username = mapping[p][:name]
-  participants << { username: username, id: p } if mapping[p][:timezone] == "Australia/Canberra"
-  puts "#{username.light_red} is in \"#{mapping[p][:timezone]}\", excluding." unless mapping[p][:timezone] == "Australia/Canberra"
+  if mapping[p][:timezone] == "Australia/Canberra"
+    participants << { username: username, id: p }
+  else
+    puts "#{username.light_red} is in \"#{mapping[p][:timezone]}\", excluding."
+  end
 end
 
 exclusions = []
@@ -135,9 +136,9 @@ participants.each do |participant|
   currentgroup = (currentgroup + 1) % NGROUPS
 end
 
-nr_picked_groups = (NGROUPS/5.to_f).ceil
+nr_picked_groups = (NGROUPS / 5.to_f).ceil
 
-puts "Let's allow 20% of people to get picked for LR, that's #{nr_picked_groups} groups."
+puts "Allow 20% of people to get picked, that's #{nr_picked_groups} groups."
 groups = groups.first nr_picked_groups
 
 n = 1
@@ -166,16 +167,21 @@ groups.each do |group|
     channel: group_chat['id'],
     link_names: 1,
     text: "Congratulations, you've been selected for this Lunch Roulette! " \
-      "We're trialling a new approach where everyone in #{OFFICE_CHANNEL} is automatically entered into the lottery – " \
-      "if you don't want to join in, feel free to ignore. Have a nice day! :smile:",
-    as_user: true)
+      "We're trialling a new approach where everyone in #{OFFICE_CHANNEL} is " \
+      "automatically entered into the lottery – " \
+      "if you don't want to join in, feel free to ignore. " \
+      "Have a nice day! :smile:",
+    as_user: true
+  )
   client.chat_postMessage(
     channel: group_chat['id'],
     link_names: 1,
     text: "_Psst: Don't understand what Lunch Roulette is? Want to opt-out? " \
-      "All information is here: https://github.com/toothbrush/lunch-roulette/wiki. " \
+      "More information here: " \
+      "https://github.com/toothbrush/lunch-roulette/wiki. " \
       "Please feel free to send comments/flames/thoughts to @paul.david._",
-    as_user: true)
+    as_user: true
+  )
 
   client.chat_postMessage(channel: '@paul.david',
                           text: "DEBUG INFO: group = #{names}",
