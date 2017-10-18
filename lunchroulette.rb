@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 # frozen_string_literal: true
 
 require 'date'
@@ -23,11 +24,11 @@ end
 
 # we want at least GROUP_SIZE people in a group.  One more is okay,
 # too.
-GROUP_SIZE = 4
+GROUP_SIZE = 6
 
 # in case something goes wrong i want to be able to reproduce the same
 # ordering again.  default to using today's date.
-RANDOM_SEED = Time.now.strftime('%Y%m%d').to_i.freeze
+RANDOM_SEED = (ENV['RANDOM_SEED'] || Time.now.strftime('%Y%m%d')).to_i.freeze
 
 GOOGLECONFIG = File.dirname(__FILE__) + '/googleconfig.json'
 CONFIG = File.dirname(__FILE__) + '/config.json'
@@ -47,21 +48,73 @@ end
 session = GoogleDrive::Session.from_config(GOOGLECONFIG)
 
 # The lunch roulette sheet:
-SHEETKEY = is_sf ? configs['sf_sheet_key'] : configs['sheet_key']
-SIGNUP = is_sf ? configs['sf_signup_link'] : configs['signup_link']
+SHEETKEY = configs['opt_out_sheet']
+SIGNUP = configs['opt_out_link']
 OFFICE_CHANNEL = is_sf ? '#sf-office' : '#melbourne'
 
+Slack.configure do |config|
+  config.token = configs['SLACK_API_TOKEN']
+end
+
+client = Slack::Web::Client.new
+
+puts "Getting inhabitants of #{OFFICE_CHANNEL}..."
+office_channel_info = client.channels_info(channel: OFFICE_CHANNEL)
+
+raw_participants = office_channel_info['channel']['members']
+
+puts "Getting all users..."
+users_list = client.users_list['members']
+
+mapping = {}
+
+users_list.each do |u|
+  next if u['deleted']     # skip over deleted users
+  next if u['is_bot']      # skip over bots
+  next if u['is_app_user']
+  mapping[u['id']] = { name: u['name'],
+                       timezone: u['tz'],
+                       deleted: u['deleted'] }
+end
+
+participants = []
+puts "Translating UIDs to Slack usernames..."
+# Assuming here we get no dups / invalid UIDs, etc.
+raw_participants.each do |p|
+  next unless mapping[p]
+  username = mapping[p][:name]
+  if mapping[p][:timezone] == "Australia/Canberra"
+    participants << { username: username, id: p }
+  else
+    puts "#{username.light_red} is in \"#{mapping[p][:timezone]}\", excluding."
+  end
+end
+
+exclusions = []
+
+puts "Getting opt-out users..."
 # Worksheet of form responses:
 ws = session.spreadsheet_by_key(SHEETKEY).worksheets.first
 
 # Responses start on row 2, 1st is header
 rows = ws.rows.drop(1)
 
-participants = []
-
 rows.each do |row|
-  participants << { name: row[2], email: row[1] }
+  exclusions << row[2] # this is Slack username without the @
 end
+
+puts "Number of                     exclusions: #{exclusions.length}"
+before = participants.length
+puts "Number of participants before exclusions: #{before}"
+participants = participants.reject do |elem|
+  exclusions.include? elem[:username]
+end
+after = participants.length
+puts "Number of participants after  exclusions: #{after}"
+print "Sanity check: "
+
+exit unless exclusions.length + after == before
+puts "passed."
 
 puts "Found #{participants.length} participants.".magenta
 
@@ -83,69 +136,52 @@ participants.each do |participant|
   currentgroup = (currentgroup + 1) % NGROUPS
 end
 
+nr_picked_groups = (NGROUPS / 5.to_f).ceil
+
+puts "Allow 20% of people to get picked, that's #{nr_picked_groups} groups."
+groups = groups.first nr_picked_groups
+
 n = 1
 groups.each do |grp|
   puts "\nGroup #{n} is:".white
   grp.each do |elt|
-    puts " - #{elt[:name]}, @#{to_slack_handle(elt[:email])}"
-  end
-  n += 1
-end
-
-n = 1
-groups.each do |grp|
-  puts "Group #{n} has size #{grp.length}".blue
-  if grp.length < GROUP_SIZE
-    puts "WARNING: Hmmm!  Group #{grp} is #{grp.length} big...".red
+    puts " - #{elt[:username]} (#{elt[:id]})"
   end
   n += 1
 end
 
 puts ''
 
-Slack.configure do |config|
-  config.token = configs['SLACK_API_TOKEN']
-end
-
-client = Slack::Web::Client.new
-
-users_list = client.users_list['members']
-
-mapping = Hash.new do |_hash, key|
-  raise("Slack user #{key} doesn't exist!")
-end
-
-users_list.each do |u|
-  mapping[u['name']] = u['id']
-end
-
 exit unless HighLine.agree('Do these look right? (type "y")')
 
 groups.each do |group|
-  names = group.map { |x| "@#{to_slack_handle(x[:email])}" }.join(', ')
-  rcpt = group.map { |x| mapping[to_slack_handle(x[:email])] }.join(',')
+  names = group.map { |x| "@#{x[:username]}" }.join(', ')
+  rcpt = group.map { |x| x[:id] }.join(',')
 
   puts "We'll send to this group: ".red
   puts names.cyan
 
   next unless HighLine.agree('Send MPIMs via Slack now? (type "y")')
   group_chat = client.mpim_open(users: rcpt)['group']
-  client.chat_postMessage(channel: group_chat['id'],
-                          text: "Congratulations, you #{group.length} are " \
-                            "together for this week's Lunch Roulette! Feel " \
-                            "free to continue the discussion here, I'm " \
-                            "just a shy bot and I'll keep quiet now. " \
-                            "Experience shows that this works best " \
-                            "if someone quickly takes initiative and " \
-                            "kicks off the planning!",
-                          as_user: true)
-  client.chat_postMessage(channel: group_chat['id'],
-                          text: '_Psst: I hope you like the new ' \
-                            'Slack integration. It\'s very hip ' \
-                            'and modern and 2.0 -- @paul.david ' \
-                            'is in the corner grumbling about ' \
-                            'the kids these days not using email..._',
-                          as_user: true)
+  client.chat_postMessage(
+    channel: group_chat['id'],
+    link_names: 1,
+    text: "Congratulations, you've been selected for this Lunch Roulette! " \
+      "We're trialling a new approach where everyone in #{OFFICE_CHANNEL} is " \
+      "automatically entered into the lottery – " \
+      "if you don't want to join in, feel free to ignore. " \
+      "Have a nice day! :smile:",
+    as_user: true
+  )
+  client.chat_postMessage(
+    channel: group_chat['id'],
+    link_names: 1,
+    text: "_Psst: Don't understand what Lunch Roulette is? Want to opt-out? " \
+      "More information here: " \
+      "https://github.com/toothbrush/lunch-roulette/wiki. " \
+      "Please feel free to send comments/flames/thoughts to @paul.david._",
+    as_user: true
+  )
 
   client.chat_postMessage(channel: '@paul.david',
                           text: "DEBUG INFO: group = #{names}",
@@ -155,13 +191,3 @@ end
 client.chat_postMessage(channel: '@paul.david',
                         text: "DEBUG INFO: seed = #{RANDOM_SEED}",
                         as_user: true)
-
-if HighLine.agree("Send reminder to #{OFFICE_CHANNEL} now? (type \"y\")")
-  client.chat_postMessage(channel: OFFICE_CHANNEL,
-                          text: "This week's lunch roulette has just been " \
-                            "kicked off, and it's already rumoured to be " \
-                            "a roaring success. Don't miss out, sign up " \
-                            "for next time: #{SIGNUP} :sun_with_face: " \
-                            "Stay happy and healthy!",
-                          as_user: true)
-end

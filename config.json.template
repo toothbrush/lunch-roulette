@@ -3,10 +3,6 @@
     "SLACK_API_TOKEN": "xoxb-asdfasdfasdfxxxxxxxx",
     # Find the sheet keys by visiting Google Sheets and copying the id
     # from the URL.
-    # SF-related Google sheets:
-    "sf_sheet_key": "1cYxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "sf_signup_link": "(SF version) https://goo.gl/forms/xxxxxxxxxxxx",
-    # MEL-related Google sheets
-    "sheet_key": "1Loxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "signup_link": "(MEL version) https://goo.gl/forms/xxxxxxxxxxxx"
+    "opt_out_sheet": "1cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxew",
+    "opt_out_link": "https://docs.google.com/forms/d/e/1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxJw/viewform?usp=sf_link",
 }
