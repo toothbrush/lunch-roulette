@@ -101,6 +101,7 @@ rows = ws.rows.drop(1)
 
 rows.each do |row|
   exclusions << row[2] # this is Slack username without the @
+  puts "[OPTOUT] #{row[2]}".red
 end
 
 puts "Number of                     exclusions: #{exclusions.length}"
