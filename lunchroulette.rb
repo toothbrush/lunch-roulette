@@ -83,7 +83,7 @@ puts "Translating UIDs to Slack usernames..."
 raw_participants.each do |p|
   next unless mapping[p]
   username = mapping[p][:name]
-  if mapping[p][:timezone] == "Australia/Canberra"
+  if mapping[p][:timezone] =~ /^Australia\/.+/
     participants << { username: username, id: p }
   else
     puts "#{username.light_red} is in \"#{mapping[p][:timezone]}\", excluding."
