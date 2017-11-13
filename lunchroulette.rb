@@ -111,11 +111,6 @@ participants = participants.reject do |elem|
   exclusions.include? elem[:username]
 end
 after = participants.length
-puts "Number of participants after  exclusions: #{after}"
-print "Sanity check: "
-
-exit unless exclusions.length + after == before
-puts "passed."
 
 puts "Found #{participants.length} participants.".magenta
 
