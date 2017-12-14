@@ -180,6 +180,7 @@ groups.each do |group|
   )
 
   client.chat_postMessage(channel: '@paul.david',
+                          link_names: 1,
                           text: "DEBUG INFO: group = #{names}",
                           as_user: true)
 end
