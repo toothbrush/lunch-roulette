@@ -24,14 +24,14 @@ end
 
 # we want at least GROUP_SIZE people in a group.  One more is okay,
 # too.
-GROUP_SIZE = 6
+GROUP_SIZE = 5
 
 # in case something goes wrong i want to be able to reproduce the same
 # ordering again.  default to using today's date.
 RANDOM_SEED = (ENV['RANDOM_SEED'] || Time.now.strftime('%Y%m%d')).to_i.freeze
 
 GOOGLECONFIG = File.dirname(__FILE__) + '/googleconfig.json'
-CONFIG = File.dirname(__FILE__) + '/config.json'
+CONFIG = File.dirname(__FILE__) + '/config2.json'
 
 args = Hash[ARGV.flat_map { |s| s.scan(/--?([^=\s]+)(?:=(\S+))?/) }]
 
@@ -83,7 +83,7 @@ puts "Translating UIDs to Slack usernames..."
 raw_participants.each do |p|
   next unless mapping[p]
   username = mapping[p][:name]
-  if mapping[p][:timezone] =~ /^Australia\/.+/
+  if mapping[p][:timezone] =~ /^America\/Los_Angeles/
     participants << { username: username, id: p }
   else
     puts "#{username.light_red} is in \"#{mapping[p][:timezone]}\", excluding."
@@ -110,7 +110,6 @@ puts "Number of participants before exclusions: #{before}"
 participants = participants.reject do |elem|
   exclusions.include? elem[:username]
 end
-after = participants.length
 
 puts "Found #{participants.length} participants.".magenta
 
@@ -131,11 +130,6 @@ participants.each do |participant|
   groups[currentgroup] << participant
   currentgroup = (currentgroup + 1) % NGROUPS
 end
-
-nr_picked_groups = (NGROUPS / 5.to_f).ceil
-
-puts "Allow 20% of people to get picked, that's #{nr_picked_groups} groups."
-groups = groups.first nr_picked_groups
 
 n = 1
 groups.each do |grp|
@@ -159,32 +153,25 @@ groups.each do |group|
 
   next unless HighLine.agree('Send MPIMs via Slack now? (type "y")')
   group_chat = client.mpim_open(users: rcpt)['group']
-  client.chat_postMessage(
-    channel: group_chat['id'],
-    link_names: 1,
-    text: "Congratulations, you've been selected for this Lunch Roulette! " \
-      "We're trialling a new approach where everyone in #{OFFICE_CHANNEL} is " \
-      "automatically entered into the lottery – " \
-      "if you don't want to join in, feel free to ignore. " \
-      "Have a nice day! :smile:",
-    as_user: true
-  )
-  client.chat_postMessage(
-    channel: group_chat['id'],
-    link_names: 1,
-    text: "_Psst: Don't understand what Lunch Roulette is? Want to opt-out? " \
-      "More information here: " \
-      "https://github.com/toothbrush/lunch-roulette/wiki. " \
-      "Please feel free to send comments/flames/thoughts to @paul.david._",
-    as_user: true
-  )
 
-  client.chat_postMessage(channel: '@paul.david',
+  client.chat_postMessage(channel: group_chat['id'],
                           link_names: 1,
+                          text: "Congratulations, you #{group.length} are " \
+                            "together for this week's lunch roulette! Feel " \
+                            "free to continue the discussion here, I'm " \
+                            "just a shy bot and I'll keep quiet now.",
+                          as_user: true)
+  client.chat_postMessage(channel: group_chat['id'],
+                          link_names: 1,
+                          text: '_Psst: ping @ryan.odonnell ' \
+                            'if you have any questions._',
+                          as_user: true)
+
+  client.chat_postMessage(channel: '@ryan.odonnell',
                           text: "DEBUG INFO: group = #{names}",
                           as_user: true)
 end
 
-client.chat_postMessage(channel: '@paul.david',
+client.chat_postMessage(channel: '@ryan.odonnell',
                         text: "DEBUG INFO: seed = #{RANDOM_SEED}",
                         as_user: true)

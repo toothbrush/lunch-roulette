@@ -18,7 +18,7 @@ end
 client = Slack::Web::Client.new
 
 if HighLine.agree("Send message as @lunchbot now? (type \"y\")")
-  client.chat_postMessage(channel: '#melbourne',
+  client.chat_postMessage(channel: '#alex-test-sf-lr',
                           text: "RANDOM MESSAGE",
                           as_user: true)
 end
