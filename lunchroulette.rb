@@ -153,30 +153,28 @@ exit unless HighLine.agree('Do these look right? (type "y")')
 
 groups.each do |group|
   names = group.map { |x| "@#{x[:username]}" }.join(', ')
-  rcpt = group.map { |x| x[:id] }.join(',')
 
-  puts "We'll send to this group: ".red
-  puts names.cyan
+  champion = "@#{group[0][:username]}"
+
+  puts "We'll send to this person: ".red
+  puts champion.cyan
 
   next unless HighLine.agree('Send MPIMs via Slack now? (type "y")')
-  group_chat = client.mpim_open(users: rcpt)['group']
   client.chat_postMessage(
-    channel: group_chat['id'],
+    channel: champion,
     link_names: 1,
-    text: "Congratulations, you've been selected for this Lunch Roulette! " \
-      "We're trialling a new approach where everyone in #{OFFICE_CHANNEL} is " \
-      "automatically entered into the lottery – " \
-      "if you don't want to join in, feel free to ignore. " \
-      "Have a nice day! :smile:",
+    text: "Congratulations, you've been selected as your group's Lunch Roulette champion! " \
+      "These are your group mates: #{names}.  " \
+      "Go ahead and send them a friendly message :slightly_smiling_face: :+1: :tada:",
     as_user: true
   )
+
   client.chat_postMessage(
-    channel: group_chat['id'],
+    channel: champion,
     link_names: 1,
     text: "_Psst: Don't understand what Lunch Roulette is? Want to opt-out? " \
       "More information here: " \
-      "https://github.com/toothbrush/lunch-roulette/wiki. " \
-      "Please feel free to send comments/flames/thoughts to @paul.david._",
+      "https://github.com/toothbrush/lunch-roulette/wiki._",
     as_user: true
   )
 
