@@ -82,7 +82,7 @@ puts "Translating UIDs to Slack usernames..."
 # Assuming here we get no dups / invalid UIDs, etc.
 raw_participants.each do |p|
   next unless mapping[p]
-  username = mapping[p][:name]
+  username = mapping[p][:name].downcase
   if mapping[p][:timezone] =~ /^Australia\/.+/
     participants << { username: username, id: p }
   else
@@ -100,8 +100,8 @@ ws = session.spreadsheet_by_key(SHEETKEY).worksheets.first
 rows = ws.rows.drop(1)
 
 rows.each do |row|
-  exclusions << row[2] # this is Slack username without the @
-  puts "[OPTOUT] #{row[2]}".red
+  exclusions << row[2].downcase # this is Slack username without the @
+  puts "[OPTOUT] #{row[2].downcase}".red
 end
 
 puts "Number of                     exclusions: #{exclusions.length}"
