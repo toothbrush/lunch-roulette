@@ -132,9 +132,10 @@ participants.each do |participant|
   currentgroup = (currentgroup + 1) % NGROUPS
 end
 
-nr_picked_groups = (NGROUPS / 5.to_f).ceil
+ENTRY_RATIO = 0.4
+nr_picked_groups = (NGROUPS * ENTRY_RATIO.to_f).ceil
 
-puts "Allow 20% of people to get picked, that's #{nr_picked_groups} groups."
+puts "Allow #{100 * ENTRY_RATIO}% of people to get picked, that's #{nr_picked_groups} groups."
 groups = groups.first nr_picked_groups
 
 n = 1
