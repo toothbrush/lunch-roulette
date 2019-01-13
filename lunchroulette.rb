@@ -172,7 +172,7 @@ groups.each do |group|
   client.chat_postMessage(
     channel: champion,
     link_names: 1,
-    text: "_Psst: Don't understand what Lunch Roulette is? Want to opt-out? " \
+    text: "_Psst: Don't understand what Lunch Roulette is? " \
       "More information here: " \
       "https://github.com/toothbrush/lunch-roulette/wiki._",
     as_user: true
