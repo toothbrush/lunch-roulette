@@ -173,9 +173,9 @@ groups.each do |group|
   client.chat_postMessage(
     channel: group_chat['id'],
     link_names: 1,
-    text: "_Psst: Don't understand what Lunch Roulette is? " \
+    text: "Psst: Don't understand what Lunch Roulette is? " \
       "More information here: " \
-      "https://github.com/toothbrush/lunch-roulette/wiki._",
+      "https://github.com/toothbrush/lunch-roulette/wiki",
     as_user: true
   )
 
