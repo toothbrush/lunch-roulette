@@ -153,24 +153,25 @@ exit unless HighLine.agree('Do these look right? (type "y")')
 
 groups.each do |group|
   names = group.map { |x| "@#{x[:username]}" }.join(', ')
+  rcpt = group.map { |x| x[:id] }.join(',')
 
-  champion = "@#{group[0][:username]}"
-
-  puts "We'll send to this person: ".red
-  puts champion.cyan
+  puts "We'll send to this group: ".red
+  puts names.cyan
 
   next unless HighLine.agree('Send MPIMs via Slack now? (type "y")')
+  group_chat = client.mpim_open(users: rcpt)['group']
   client.chat_postMessage(
-    channel: champion,
+    channel: group_chat['id'],
     link_names: 1,
-    text: "Congratulations, you've been selected as your group's Lunch Roulette champion! " \
-      "These are your group mates: #{names}.  " \
-      "Go ahead and send them a friendly message :slightly_smiling_face: :+1: :tada:",
+    text: "Congratulations, you've been selected for this month's Lunch Roulette! " \
+      "By default, we're entering everyone in #{OFFICE_CHANNEL}.  " \
+      "If you don't want to have lunch with new colleagues, feel free to ignore this. " \
+      "Have a nice day! :smile:",
     as_user: true
   )
 
   client.chat_postMessage(
-    channel: champion,
+    channel: group_chat['id'],
     link_names: 1,
     text: "_Psst: Don't understand what Lunch Roulette is? " \
       "More information here: " \
