@@ -84,6 +84,7 @@ DEPENDENCIES
   colorize
   google_drive (~> 3.0)
   highline
+  nokogiri (>= 1.8.5)
   slack-ruby-client
 
 BUNDLED WITH
